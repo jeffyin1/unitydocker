@@ -1,0 +1,30 @@
+pipeline {
+  agent { 
+    node { 
+      label "${params.NODE_NAME}"
+      
+    }
+  }
+  environment {
+      UNITY_SERIAL = "${params.UNITY_SERIAL}"
+      UNITY_USERNAME = "${params.UNITY_USERNAME}"
+      UNITY_PASSWORD = "${params.UNITY_PASSWORD}"
+      DOCKER_FULLNAME = "${params.DOCKER_FULLNAME}"
+      //#https://hub.docker.com/r/gableroux/unity3d/tags
+      BASE_GABLEROUX_DOCKER = "${params.BASE_GABLEROUX_DOCKER}"
+      //#https://gitlab.com/gableroux/unity3d/-/blob/master/ci-generator/unity_versions.old.yml
+      DOWNLOAD_URL= "${params.DOWNLOAD_URL}"
+  }
+  stages {
+    stage('build-unity-image') {
+      steps {
+        script {
+            dir("jenkins/jobs/create_unity_image/"){
+                sh "./build-base-unity-docker.sh"
+            }
+        }
+      }
+    }
+  }
+
+}
