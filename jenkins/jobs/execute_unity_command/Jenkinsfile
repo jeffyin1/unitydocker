@@ -1,0 +1,57 @@
+def clientPath = ""
+
+pipeline {
+    agent {
+        node { 
+            label "${params.NODE_NAME}"
+        }
+    }
+
+    environment{
+        CLIENT_BRANCH = "${params.CLIENT_BRANCH}"
+        PLATFORM = "${params.PLATFORM}"
+        GIT_SSH_KEY = credentials('auth')
+        GIT_SSH_COMMAND = "ssh -i \"${env.GIT_SSH_KEY}\""
+    }
+
+    stages {
+        stage('Init') {
+            steps {
+                script {
+                    clientPath = "client-${env.PLATFORM}"
+                }
+            }
+        }
+
+        stage('Checkout-Project') {
+            steps {
+                script {
+
+                    // Implement Checkout repo by yourself
+
+                    dir(clientPath) {
+                        // ubuntu need to ignorecase
+                        sh "git config --local core.ignorecase true" 
+                    }
+                }
+            }
+        }
+        stage('Build Assetbundle') {
+            agent {
+                docker { 
+                    reuseNode true
+                    image "${params.DOCKER_FULLNAME}" 
+                    args '-u root --privileged'
+                }
+            }
+
+            steps {
+                dir(clientPath) {
+                    sh "/opt/Unity/Editor/Unity -accept-apiupdate -nographics -quit -batchmode -silent-crashes -logFile -executeMethod MyProject.BuildAssetbundle -projectPath ./ -buildTarget ${env.PLATFORM}"
+                }
+            }
+        }
+        
+    }
+}
+
